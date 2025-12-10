@@ -1,16 +1,301 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Supermarket</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<title>Futuristic Supermarket Invoice System</title>
+<style>
+/* =================== GLOBAL STYLES =================== */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: #0a0f1f;
+    color: #fff;
+    overflow-x: hidden;
+}
+
+h1, h2, h3 {
+    color: #66ccff;
+}
+
+/* Neon button */
+.btn {
+    padding: 10px 20px;
+    background: #1a8cff;
+    border: none;
+    color: white;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: .2s;
+    box-shadow: 0 0 8px #1a8cff;
+}
+.btn:hover {
+    background: #4da6ff;
+    box-shadow: 0 0 15px #4da6ff;
+}
+
+/* Layout */
+#container {
+    display: flex;
+    height: 100vh;
+}
+
+/* Left – product browser */
+#shop {
+    flex: 3;
+    padding: 15px;
+    overflow-y: scroll;
+    border-right: 2px solid #1a1a2e;
+}
+
+.product {
+    background: #11182f;
+    margin: 10px 0;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #22345d;
+}
+
+.product img {
+    width: 80px;
+    height: 80px;
+    border-radius: 5px;
+}
+
+.product button {
+    margin-top: 10px;
+}
+
+/* Right – cart */
+#cart {
+    flex: 2;
+    background: #0d1226;
+    padding: 20px;
+    overflow-y: scroll;
+}
+
+/* Admin panel modal */
+#adminPanel {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(8px);
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+#adminContent {
+    background: #11182f;
+    padding: 30px;
+    border-radius: 10px;
+    width: 500px;
+}
+
+/* Inputs */
+input, select {
+    width: 100%;
+    padding: 10px;
+    margin: 6px 0;
+    border-radius: 6px;
+    border: none;
+}
+
+/* Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+th, td {
+    padding: 10px;
+    border-bottom: 1px solid #22345d;
+}
+</style>
 </head>
 <body>
-  <h1>Welcome to Our Supermarket!</h1>
-  <div id="products">
-    <!-- Products will be dynamically loaded here -->
-  </div>
-  <script src="app.js"></script>
+
+<button class="btn" onclick="openAdmin()" style="position:absolute;top:10px;right:10px">Admin Panel</button>
+
+<h1 style="text-align:center;margin:10px;">🛒 Futuristic Supermarket Invoice System</h1>
+
+<div id="container">
+    
+    <!-- SHOP -->
+    <div id="shop">
+        <h2>Products</h2>
+        <div id="productList"></div>
+    </div>
+
+    <!-- CART -->
+    <div id="cart">
+        <h2>Your Cart</h2>
+        <div id="cartItems"></div>
+        <h3>Total: $<span id="totalAmount">0.00</span></h3>
+        <button class="btn" onclick="printInvoice()">Print Invoice</button>
+    </div>
+
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="adminPanel">
+    <div id="adminContent">
+        <h2>Admin Panel</h2>
+
+        <label>Product Name</label>
+        <input id="pName">
+
+        <label>Price</label>
+        <input id="pPrice" type="number">
+
+        <label>Stock</label>
+        <input id="pStock" type="number">
+
+        <label>Image URL</label>
+        <input id="pImg">
+
+        <button class="btn" onclick="addProduct()">Add / Update Product</button>
+        <button class="btn" style="background:#ff3333" onclick="closeAdmin()">Close</button>
+
+        <h3>Existing Products</h3>
+        <div id="adminProducts"></div>
+
+        <h3>Sales Tracker</h3>
+        <p>Total Sales Today: $<span id="salesToday">0</span></p>
+    </div>
+</div>
+
+<script>
+/* =================== PRODUCT DATABASE =================== */
+
+let products = [
+    {id:1, name:"Fresh Milk 1L", price:2.39, stock:30, img:"https://i.imgur.com/6qKpQOz.png"},
+    {id:2, name:"Organic Eggs (12)", price:4.20, stock:40, img:"https://i.imgur.com/P4Fsx6l.png"},
+    {id:3, name:"Bananas", price:1.10, stock:75, img:"https://i.imgur.com/3WzG3rA.png"},
+    {id:4, name:"Chicken Breast 1kg", price:7.49, stock:22, img:"https://i.imgur.com/dg7iWIA.png"},
+    {id:5, name:"Rice 5kg Bag", price:6.99, stock:15, img:"https://i.imgur.com/sdM6v8I.png"},
+    {id:6, name:"Cooking Oil 1L", price:3.10, stock:50, img:"https://i.imgur.com/DC8d2dM.png"},
+    {id:7, name:"Coca-Cola 1.5L", price:1.49, stock:60, img:"https://i.imgur.com/4Hx2C4L.png"},
+    {id:8, name:"Chips Family Pack", price:2.79, stock:33, img:"https://i.imgur.com/MIk7uRk.png"},
+];
+
+/* Cart & sales storage */
+let cart = [];
+let salesTotal = 0;
+
+/* =================== RENDER PRODUCTS =================== */
+
+function renderProducts(){
+    let list = document.getElementById("productList");
+    list.innerHTML = "";
+    products.forEach(p=>{
+        list.innerHTML += `
+        <div class="product">
+            <img src="${p.img}">
+            <h3>${p.name}</h3>
+            <p>Price: $${p.price}</p>
+            <p>Stock: ${p.stock}</p>
+            <input type="number" id="qty${p.id}" min="1" max="${p.stock}" placeholder="Qty">
+            <button class="btn" onclick="addToCart(${p.id})">Add to Cart</button>
+        </div>
+        `;
+    });
+}
+renderProducts();
+
+/* =================== CART FUNCTIONS =================== */
+
+function addToCart(id){
+    let qty = Number(document.getElementById("qty"+id).value);
+    if(!qty || qty <= 0) return alert("Enter valid quantity");
+    let p = products.find(x=>x.id===id);
+    if(qty > p.stock) return alert("Not enough stock!");
+
+    cart.push({ ...p, qty });
+    p.stock -= qty;
+
+    renderProducts();
+    renderCart();
+}
+
+function renderCart(){
+    let c = document.getElementById("cartItems");
+    let total = 0;
+    c.innerHTML = "";
+    cart.forEach(item=>{
+        total += item.qty * item.price;
+        c.innerHTML += `
+            <p>${item.name} — ${item.qty} x $${item.price}</p>
+        `;
+    });
+    document.getElementById("totalAmount").innerText = total.toFixed(2);
+}
+
+/* =================== PRINT INVOICE =================== */
+
+function printInvoice(){
+    let win = window.open("", "_blank");
+    win.document.write("<h1>Supermarket Invoice</h1>");
+    cart.forEach(i=>{
+        win.document.write(`<p>${i.name} — ${i.qty} × $${i.price}</p>`);
+    });
+    let total = document.getElementById("totalAmount").innerText;
+    win.document.write(`<h3>Total: $${total}</h3>`);
+    win.print();
+
+    salesTotal += Number(total);
+    document.getElementById("salesToday").innerText = salesTotal;
+
+    cart = [];
+    renderCart();
+}
+
+/* =================== ADMIN PANEL =================== */
+
+function openAdmin(){
+    document.getElementById("adminPanel").style.display = "flex";
+    renderAdminProducts();
+}
+
+function closeAdmin(){
+    document.getElementById("adminPanel").style.display = "none";
+}
+
+function addProduct(){
+    let name = pName.value;
+    let price = Number(pPrice.value);
+    let stock = Number(pStock.value);
+    let img = pImg.value;
+
+    if(!name || !price || !stock || !img) return alert("Fill all fields");
+
+    products.push({
+        id: Date.now(),
+        name, price, stock, img
+    });
+
+    renderProducts();
+    renderAdminProducts();
+    alert("Product added!");
+}
+
+function deleteProduct(id){
+    products = products.filter(p=>p.id!==id);
+    renderProducts();
+    renderAdminProducts();
+}
+
+function renderAdminProducts(){
+    let admin = document.getElementById("adminProducts");
+    admin.innerHTML = "";
+    products.forEach(p=>{
+        admin.innerHTML += `
+            <p>${p.name} — $${p.price} — Stock: ${p.stock}
+            <button class="btn" onclick="deleteProduct(${p.id})">Delete</button></p>
+        `;
+    });
+}
+</script>
+
 </body>
 </html>
