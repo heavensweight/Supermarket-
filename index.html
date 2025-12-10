@@ -1,99 +1,157 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Futuristic Supermarket POS</title>
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Futuristic Supermarket POS</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+
+    <!-- External Libraries -->
+    <script src="libs/chart.min.js"></script>
+    <script src="libs/html2canvas.min.js"></script>
 </head>
+
 <body>
 
-<header>
-    <h1>Supermarket POS</h1>
-    <nav>
-        <button class="tab-btn active" data-tab="shopTab">Shop</button>
-        <button class="tab-btn" data-tab="cartTab">Cart</button>
-        <button class="tab-btn" data-tab="adminTab">Admin</button>
-        <button class="tab-btn" data-tab="invoiceTab">Invoices</button>
+    <!-- Notification Popup -->
+    <div id="popup" class="popup-hidden"></div>
+
+    <!-- TOP NAVIGATION TABS -->
+    <nav id="topNav">
+        <div class="nav-item active" data-tab="productsTab">Products</div>
+        <div class="nav-item" data-tab="cartTab">Cart</div>
+        <div class="nav-item" data-tab="adminTab">Admin</div>
+        <div class="nav-item" data-tab="dashboardTab">Dashboard</div>
+        <div class="nav-item" data-tab="settingsTab">Settings</div>
+
+        <!-- THEME SWITCH -->
+        <div id="themeToggle">🌙</div>
     </nav>
-</header>
 
-<main>
+    <!-- MAIN CONTENT AREA -->
+    <main id="content">
 
-    <!-- SHOP TAB -->
-    <section id="shopTab" class="tab active">
-        <div class="controls">
-            <input type="text" id="searchInput" placeholder="Search products...">
-            <select id="categoryFilter"></select>
-            <select id="sortProducts">
-                <option value="">Sort By</option>
-                <option value="name">Name</option>
-                <option value="price">Price</option>
-                <option value="stock">Stock</option>
+        <!-- ================= PRODUCTS TAB ================= -->
+        <section id="productsTab" class="tab active">
+
+            <div class="header-row">
+                <input type="text" id="searchInput" placeholder="Search products...">
+                <select id="categoryFilter"></select>
+                <select id="sortProducts">
+                    <option value="name">Sort by Name</option>
+                    <option value="price">Sort by Price</option>
+                    <option value="stock">Sort by Stock</option>
+                </select>
+            </div>
+
+            <div id="productsGrid"></div>
+        </section>
+
+        <!-- ================= CART TAB ================= -->
+        <section id="cartTab" class="tab">
+            <h2>Your Cart</h2>
+            <div id="cartList"></div>
+
+            <div class="cart-summary">
+                <p>Subtotal: $<span id="subtotal">0.00</span></p>
+                <p>Discount: $<span id="discount">0.00</span></p>
+                <p>Tax: $<span id="tax">0.00</span></p>
+                <h3>Total: $<span id="total">0.00</span></h3>
+
+                <label>Payment Method:</label>
+                <select id="paymentMethod">
+                    <option cash>Cash</option>
+                    <option card>Card</option>
+                    <option mixed>Mixed</option>
+                </select>
+
+                <button class="btn" id="checkoutBtn">Checkout</button>
+            </div>
+        </section>
+
+        <!-- ================= ADMIN TAB ================= -->
+        <section id="adminTab" class="tab">
+            <h2>Admin Panel</h2>
+
+            <!-- PRODUCT MANAGEMENT -->
+            <h3>Add / Edit Product</h3>
+            <div class="form-grid">
+
+                <input id="pName" placeholder="Product Name">
+                <input id="pPrice" type="number" placeholder="Price">
+                <input id="pStock" type="number" placeholder="Stock">
+
+                <input id="pBarcode" placeholder="Barcode">
+                <input id="pExpiry" type="date">
+                <select id="pCategory"></select>
+
+                <input id="pImg" type="file" accept="image/*">
+            </div>
+
+            <button class="btn" id="saveProductBtn">Save Product</button>
+
+            <h3>Product List</h3>
+            <div id="adminProductList"></div>
+        </section>
+
+        <!-- ================= DASHBOARD TAB ================= -->
+        <section id="dashboardTab" class="tab">
+            <h2>Dashboard</h2>
+
+            <div class="dashboard-cards">
+                <div class="card">
+                    <h3>Today's Sales</h3>
+                    <p id="salesToday">$0.00</p>
+                </div>
+                <div class="card">
+                    <h3>This Month</h3>
+                    <p id="salesMonth">$0.00</p>
+                </div>
+                <div class="card">
+                    <h3>Low Stock</h3>
+                    <p id="lowStockCount">0 Products</p>
+                </div>
+            </div>
+
+            <canvas id="salesChart"></canvas>
+        </section>
+
+        <!-- ================= SETTINGS TAB ================= -->
+        <section id="settingsTab" class="tab">
+            <h2>Settings</h2>
+
+            <label>Store Name</label>
+            <input id="storeNameSetting">
+
+            <label>Tax Rate (%)</label>
+            <input type="number" id="taxRateSetting">
+
+            <label>Currency</label>
+            <select id="currencySetting">
+                <option value="USD">$ - USD</option>
+                <option value="EUR">€ - EUR</option>
+                <option value="GBP">£ - GBP</option>
+                <option value="BDT">৳ - BDT</option>
             </select>
-        </div>
-        <div id="productsGrid" class="products-grid"></div>
-    </section>
 
-    <!-- CART TAB -->
-    <section id="cartTab" class="tab">
-        <h2>Your Cart</h2>
-        <div id="cartList" class="cart-list"></div>
-        <div class="totals">
-            <p>Subtotal: <span id="subtotal">0.00</span></p>
-            <p>Discount: <span id="discount">0.00</span></p>
-            <p>Tax: <span id="tax">0.00</span></p>
-            <h3>Total: <span id="total">0.00</span></h3>
-        </div>
-        <div class="checkout">
-            <label for="paymentMethod">Payment Method:</label>
-            <select id="paymentMethod">
-                <option value="Cash">Cash</option>
-                <option value="Card">Card</option>
-            </select>
-            <button id="checkoutBtn" class="btn">Checkout & Print Invoice</button>
-        </div>
-    </section>
+            <button class="btn" id="saveSettingsBtn">Save Settings</button>
+        </section>
 
-    <!-- ADMIN TAB -->
-    <section id="adminTab" class="tab">
-        <h2>Admin Panel</h2>
-        <div class="admin-section">
-            <form id="addProductForm" class="admin-form">
-                <h3>Add Product</h3>
-                <input type="text" name="name" placeholder="Product Name" required>
-                <input type="number" name="price" placeholder="Price" step="0.01" required>
-                <input type="number" name="stock" placeholder="Stock" required>
-                <select name="category" id="adminCategorySelect"></select>
-                <input type="text" name="barcode" placeholder="Barcode">
-                <input type="text" name="expiry" placeholder="Expiry Date">
-                <input type="file" name="image" accept="image/*">
-                <button type="submit" class="btn">Add Product</button>
-            </form>
+    </main>
 
-            <div id="adminProductList" class="admin-products"></div>
+    <!-- JAVASCRIPT FILES -->
+    <script src="js/utils.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/products.js"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/invoice.js"></script>
+    <script src="js/admin.js"></script>
+    <script src="js/scanner.js"></script>
+    <script src="js/app.js"></script>
 
-            <form id="settingsForm" class="admin-form">
-                <h3>Store Settings</h3>
-                <input type="text" name="storeName" placeholder="Store Name" value="My Supermarket">
-                <input type="number" name="taxRate" placeholder="Tax Rate %" step="0.1" value="5">
-                <input type="text" name="currency" placeholder="Currency" value="USD">
-                <button type="submit" class="btn">Save Settings</button>
-            </form>
-        </div>
-    </section>
-
-    <!-- INVOICE TAB -->
-    <section id="invoiceTab" class="tab">
-        <h2>Invoices</h2>
-        <div id="invoiceContainer"></div>
-    </section>
-
-</main>
-
-<div id="popup-container"></div>
-
-<script src="supermarket.js"></script>
-<script src="tabs.js"></script>
 </body>
 </html>
