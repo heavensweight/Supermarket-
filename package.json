@@ -1,0 +1,15 @@
+{
+  "name": "supermarket-frontend",
+  "version": "1.0.0",
+  "dependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "react-scripts": "5.0.1",
+    "@stripe/react-stripe-js": "^2.1.2",
+    "@stripe/stripe-js": "^1.38.1"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build"
+  }
+}
